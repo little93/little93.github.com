@@ -58,14 +58,13 @@
 		function scrollMove(scroll_wrap_obj, user_avatar_item, item_obj_class, center_index, duration){//头像容器append加入一个头像,容器不动,其它头像被加入的挤下,原来的中间头像尺寸变小,新的中间头像尺寸变大
 			scroll_wrap_obj.prepend(user_avatar_item);
 			$('.' + item_obj_class ).eq(0).velocity({ //容器
-				width: '35px',
 				height: '35px'
 			}, {
 				duration: duration,
 				begin: function(){
 					$('.' + item_obj_class ).eq(center_index).velocity({
-						scaleX: '2',
-						scaleY: '2'
+						width: '70px',
+						height: '70px'
 					}, {
 						duration: duration,
 						begin: function(){
@@ -76,8 +75,8 @@
                         }
 					});
 					$('.' + item_obj_class ).eq(center_index + 1).velocity({
-						scaleX: '0.5',
-						scaleY: '0.5'
+						width: '35px',
+						height: '35px'
 					}, {
 						duration: duration,
 						begin: function(){
