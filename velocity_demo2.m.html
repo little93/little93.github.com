@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>velocity demo</title>
+    <meta content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0" name="viewport">
+	<meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" type="text/css" href="styles/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="styles/velocity_demo.css?v=1"/>
+</head>
+<body>
+	<div id="user_avatar_scroll_wrap" style="opacity: 1" class="user_avatar_scroll_wrap"></div>
+
+	<script type="text/javascript" src="scripts/zepto.bundle.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/velocity/1.5.0/velocity.min.js"></script>
+	<script>
+		function getAvatarNum(avatar_width, space, center_user_avatar, wrap_max_height){ //获取当前设备一屏能显示下的头像数,实际一屏头像容器的高度,一屏中间头像的index
+			var wrap_obj = new Object();
+			var wrap_real_max_height;
+			var number = parseInt((wrap_max_height - center_user_avatar) / (avatar_width + space) + 1);
+			if(number % 2 == 0) {
+				number = number - 1;
+			}
+			wrap_real_max_height = center_user_avatar +  (avatar_width + space) * (number -1);
+			wrap_obj.number = number;
+			wrap_obj.wrap_real_max_height = wrap_real_max_height;
+			wrap_obj.center_index = parseInt(number / 2);
+			console.log(number);
+			return wrap_obj;
+		}
+
+		function initAvatar (scroll_wrap_obj, avatar, name, position, isCenterAvatar){//头像容器中初始化头像(中间头像尺寸大于非中间头像)
+			var userAvatarItem;
+			if(isCenterAvatar){
+				userAvatarItem = "<div class='user_left_avatar'> " +
+					"<div class='media-left media-middle'>" +
+						"<div class='normal_avatar_wrapper'><div class='user_left_avatar_img' style='width: 70px; height: 70px;'><img src = " + avatar + " /></div></div>" +
+					"</div>" +
+					"<div class='user_left_avatar_info media-body media-middle'>" +
+						"<div class='user_left_avatar_name lineClamp1'>" + name + "</div>" +
+						"<div class='user_left_avatar_position lineClamp1'>" + position +"</div>" +
+					"</div>"+
+				"</div>";
+			}else {
+				userAvatarItem = "<div class='user_left_avatar'> " +
+					"<div class='media-left media-middle'>" +
+						"<div class='normal_avatar_wrapper'><div class='user_left_avatar_img'><img src = " + avatar + " /></div></div>" +
+					"</div>" +
+					"<div class='user_left_avatar_info media-body media-middle'>" +
+						"<div class='user_left_avatar_name lineClamp1'>" + name + "</div>" +
+						"<div class='user_left_avatar_position lineClamp1'>" + position +"</div>" +
+					"</div>"+
+				"</div>";
+			}
+			scroll_wrap_obj.append(userAvatarItem);
+		}
+
+		function scrollMove(scroll_wrap_obj, user_avatar_item, item_obj_class, center_index, duration){//头像容器append加入一个头像,容器不动,其它头像被加入的挤下,原来的中间头像尺寸变小,新的中间头像尺寸变大
+			scroll_wrap_obj.prepend(user_avatar_item);
+			$('.' + item_obj_class ).eq(0).velocity({ //容器
+				height: '35px'
+			}, {
+				duration: duration,
+				begin: function(){
+					$('.' + item_obj_class ).eq(center_index).velocity({
+						width: '70px',
+						height: '70px'
+					}, {
+						duration: duration,
+						begin: function(){
+							$('.user_left_avatar_info').eq(center_index).css('vertical-align', 'bottom');
+						},
+                        complete:function(){
+                            $('.user_left_avatar').eq(-1).remove();
+                        }
+					});
+					$('.' + item_obj_class ).eq(center_index + 1).velocity({
+						width: '35px',
+						height: '35px'
+					}, {
+						duration: duration,
+						begin: function(){
+							$('.user_left_avatar_info').eq(center_index + 1).css('vertical-align', 'middle');
+						}
+					});
+
+				}
+			});
+		}
+
+		function createTimerScroll(duration, user_avatars, scroll_wrap_obj, avatar_scroll_obj) {//把所有头像分为多个一个数组添加进头像容器
+			var count = 0;
+			var timer = setInterval(function(){
+				if(user_avatars[count]){
+					var user_avatar_item = "<div class='user_left_avatar'> " +
+						"<div class='media-left media-middle'>" +
+							"<div class='normal_avatar_wrapper'><div class='user_left_avatar_img' style='height: 0'><img src = " + user_avatars[count].avatar + " /></div></div>" +
+						"</div>" +
+						"<div class='user_left_avatar_info media-body media-middle'>" +
+							"<div class='user_left_avatar_name lineClamp1'>" + user_avatars[count].name + "</div>" +
+							"<div class='user_left_avatar_position lineClamp1'>" + user_avatars[count].position +"</div>" +
+						"</div>"+
+					"</div>";
+					scrollMove(scroll_wrap_obj, user_avatar_item, 'user_left_avatar_img', avatar_scroll_obj.center_index, duration);
+					count++;
+				}else {
+					clearInterval(timer);
+					$('.user_left_avatar_info').css('display','table-cell');
+				}
+			}, duration);
+		}
+
+		$(document).ready(function(){
+			var screen_height = $(window).height();
+			var screen_width = $(window).width();
+			var scroll_wrap_obj = $('#user_avatar_scroll_wrap');
+
+			var user_avatar = 39;
+			var center_user_avatar = 74;
+			var user_space = 15;
+			var avatar_scroll_obj = getAvatarNum(user_avatar, user_space, center_user_avatar, screen_height);
+			$('#user_avatar_scroll_wrap').css({  //设置头像容器的位置
+				'height': avatar_scroll_obj.wrap_real_max_height + 'px',
+				'top': (screen_height - avatar_scroll_obj.wrap_real_max_height) / 2 + 'px',
+				'left': '50%',
+				'right': '0'
+			});
+
+			for(var i = 0; i < avatar_scroll_obj.number; i++) {  //初始化头像
+				var name = '孟青青';//tmp data
+				var position = '爱奇艺高级总监';
+				var avatar = 'images/img.jpg';
+				var isCenterAvatar = false;
+				if(i == parseInt(avatar_scroll_obj.number / 2)){
+					isCenterAvatar = true;
+				}
+				initAvatar(scroll_wrap_obj, avatar, name, position, isCenterAvatar);
+			}
+			$('.user_left_avatar').velocity({opacity: '1'},{duration: 500});
+
+			var tmp_avatar = [{avatar: 'images/img.jpg', name: '1',position: '1'},{avatar: 'images/hotImg.jpg', name: '222',position: '222222'},{avatar: 'images/img.jpg', name: '3333',position: '33333'},{avatar: 'images/img.jpg', name: '1',position: '1'},{avatar: 'images/hotImg.jpg', name: '222',position: '222222'},{avatar: 'images/img.jpg', name: '3333',position: '33333'}];
+
+			createTimerScroll(200, tmp_avatar, scroll_wrap_obj, avatar_scroll_obj);
+
+
+
+		});
+
+	</script>
+</body>
+</html>
+
